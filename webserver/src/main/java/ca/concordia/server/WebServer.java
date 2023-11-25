@@ -19,27 +19,13 @@ public class WebServer {
             //Accept a connection from a client
             Socket clientSocket = serverSocket.accept();
             System.out.println("New client...");
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            OutputStream out = clientSocket.getOutputStream();
 
-            String request = in.readLine();
-            if (request != null) {
-                if (request.startsWith("GET")) {
-                    // Handle GET request
-                    handleGetRequest(out);
-                } else if (request.startsWith("POST")) {
-                    // Handle POST request
-                    handlePostRequest(in, out);
-                }
-            }
-
-            in.close();
-            out.close();
-            clientSocket.close();
+            new Thread(new MultiThread(clientSocket)).start();
         }
+          
     }
 
-    private static void handleGetRequest(OutputStream out) throws IOException {
+    protected static void handleGetRequest(OutputStream out) throws IOException {
         // Respond with a basic HTML page
         System.out.println("Handling GET request");
         String response = "HTTP/1.1 200 OK\r\n\r\n" +
@@ -74,7 +60,7 @@ public class WebServer {
         out.flush();
     }
 
-    private static void handlePostRequest(BufferedReader in, OutputStream out) throws IOException {
+    protected static void handlePostRequest(BufferedReader in, OutputStream out) throws IOException {
         System.out.println("Handling post request");
         StringBuilder requestBody = new StringBuilder();
         int contentLength = 0;
