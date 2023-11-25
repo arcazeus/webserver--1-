@@ -33,7 +33,7 @@ public class MultiThread extends WebServer implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            // It's important to close resources in the finally block to ensure they are always closed
+            // closing threads
             try {
                 if (in != null) in.close();
                 if (out != null) out.close();

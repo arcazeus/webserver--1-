@@ -47,15 +47,23 @@ public class SimpleWebClient implements Runnable {
         } catch(InterruptedException | IOException e){
             e.printStackTrace();
         }finally {
-            // Close the streams and socket
-            try {
-                reader.close();
-                writer.close();
-                socket.close();
-            } catch (IOException e) {
-
-                e.printStackTrace();
-
+            
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (writer != null) {
+                writer.close(); 
+            }
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
         }
