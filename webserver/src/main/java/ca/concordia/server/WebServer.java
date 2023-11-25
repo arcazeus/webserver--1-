@@ -7,12 +7,17 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
 
+
 //create the WebServer class to receive connections on port 5000. Each connection is handled by a master thread that puts the descriptor in a bounded buffer. A pool of worker threads take jobs from this buffer if there are any to handle the connection.
 public class WebServer {
 
+    // private Map<Integer, Account> accounts = new HashMap<>();
+
     public void start() throws java.io.IOException{
+       ServerSocket serverSocket= null;
+       try{
         //Create a server socket
-        ServerSocket serverSocket = new ServerSocket(5000);
+         serverSocket = new ServerSocket(5000);
         while(true){
             System.out.println("Waiting for a client to connect...");
             //Accept a connection from a client
@@ -21,7 +26,9 @@ public class WebServer {
 
             new Thread(new MultiThread(clientSocket)).start();
         }
-
+    }finally{
+        serverSocket.close();
+    }
         
           
     }
