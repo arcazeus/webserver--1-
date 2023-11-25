@@ -21,7 +21,10 @@ public class WebServer {
             System.out.println("New client...");
 
             new Thread(new MultiThread(clientSocket)).start();
+            serverSocket.close();
         }
+
+        
           
     }
 

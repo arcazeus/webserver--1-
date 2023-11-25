@@ -7,72 +7,40 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class MultiThread extends WebServer implements Runnable {
-
-
-
-  private Socket clientSocket;
+    private Socket clientSocket;
 
     public MultiThread(Socket socket) {
         this.clientSocket = socket;
     }
 
-    
-     @Override
-      public void run(){
-         BufferedReader in= null;
+    @Override
+    public void run() {
+        BufferedReader in = null;
+        OutputStream out = null;
+
         try {
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        } catch (IOException e) {
-            
-            e.printStackTrace();
-        }
-            OutputStream out= null;
-            try {
-                out = clientSocket.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            out = clientSocket.getOutputStream();
 
-            String request="";
-            try {
-                request = in.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            String request = in.readLine();
             if (request != null) {
                 if (request.startsWith("GET")) {
-                    // Handle GET request
-                    try {
-                        handleGetRequest(out);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    handleGetRequest(out);
                 } else if (request.startsWith("POST")) {
-                    try {
-                        handlePostRequest(in, out);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    handlePostRequest(in, out);
                 }
             }
-
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            // It's important to close resources in the finally block to ensure they are always closed
             try {
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                clientSocket.close();
+                if (in != null) in.close();
+                if (out != null) out.close();
+                if (clientSocket != null) clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
-
-
-
+}
