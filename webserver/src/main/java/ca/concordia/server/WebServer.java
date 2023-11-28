@@ -8,10 +8,11 @@ import java.net.Socket;
 import java.net.URLDecoder;
 
 
+
 //create the WebServer class to receive connections on port 5000. Each connection is handled by a master thread that puts the descriptor in a bounded buffer. A pool of worker threads take jobs from this buffer if there are any to handle the connection.
 public class WebServer {
 
-    // private Map<Integer, Account> accounts = new HashMap<>();
+    Account client;
 
     public void start() throws java.io.IOException{
        ServerSocket serverSocket= null;
@@ -24,7 +25,7 @@ public class WebServer {
             Socket clientSocket = serverSocket.accept();
             System.out.println("New client...");
 
-            new Thread(new MultiThread(clientSocket)).start();
+            new Thread(new MultiThread(clientSocket, client)).start();
         }
     }finally{
         serverSocket.close();
@@ -68,7 +69,7 @@ public class WebServer {
         out.flush();
     }
 
-    protected static void handlePostRequest(BufferedReader in, OutputStream out) throws IOException {
+    protected static void handlePostRequest(BufferedReader in, OutputStream out , Account C) throws IOException {
         System.out.println("Handling post request");
         StringBuilder requestBody = new StringBuilder();
         int contentLength = 0;
@@ -99,16 +100,16 @@ public class WebServer {
 
                 switch (key) {
                     case "account":
-                        account = val;
+                        C.setID(val);
                         break;
                     case "value":
-                        value = val;
+                        C.withdraw(Integer.valueOf(val));
                         break;
                     case "toAccount":
-                        toAccount = val;
-                        break;
+                        toAccount=val;
+                        break; 
                     case "toValue":
-                        toValue = val;
+                         C.deposit(Integer.valueOf(val));
                         break;
                 }
             }

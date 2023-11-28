@@ -5,12 +5,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MultiThread extends WebServer implements Runnable {
     private Socket clientSocket;
+    private Account Account;
+    private  ReentrantLock mutex = new ReentrantLock();
 
-    public MultiThread(Socket socket) {
+    public MultiThread(Socket socket, Account client) {
         this.clientSocket = socket;
+        this.Account=client;
     }
 
     @Override
@@ -24,11 +28,14 @@ public class MultiThread extends WebServer implements Runnable {
 
             String request = in.readLine();
             if (request != null) {
+
+                mutex.unlock();
                 if (request.startsWith("GET")) {
                     handleGetRequest(out);
                 } else if (request.startsWith("POST")) {
-                    handlePostRequest(in, out);
+                    handlePostRequest(in, out, Account);
                 }
+                mutex.lock();
             }
         } catch (IOException e) {
             e.printStackTrace();
