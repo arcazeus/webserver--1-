@@ -6,32 +6,30 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
-
-
+import java.util.concurrent.atomic.AtomicInteger;
 
 //create the WebServer class to receive connections on port 5000. Each connection is handled by a master thread that puts the descriptor in a bounded buffer. A pool of worker threads take jobs from this buffer if there are any to handle the connection.
 public class WebServer {
+    AtomicInteger B = new AtomicInteger(0);
+    Account client = new Account(B, null);
 
-    Account client;
+    public void start() throws java.io.IOException {
+        ServerSocket serverSocket = null;
+        try {
+            // Create a server socket
+            serverSocket = new ServerSocket(5000);
+            while (true) {
+                System.out.println("Waiting for a client to connect...");
+                // Accept a connection from a client
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client...");
 
-    public void start() throws java.io.IOException{
-       ServerSocket serverSocket= null;
-       try{
-        //Create a server socket
-         serverSocket = new ServerSocket(5000);
-        while(true){
-            System.out.println("Waiting for a client to connect...");
-            //Accept a connection from a client
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("New client...");
-
-            new Thread(new MultiThread(clientSocket, client)).start();
+                new Thread(new MultiThread(clientSocket, client)).start();
+            }
+        } finally {
+            serverSocket.close();
         }
-    }finally{
-        serverSocket.close();
-    }
-        
-          
+
     }
 
     protected static void handleGetRequest(OutputStream out) throws IOException {
@@ -69,7 +67,7 @@ public class WebServer {
         out.flush();
     }
 
-    protected static void handlePostRequest(BufferedReader in, OutputStream out , Account C) throws IOException {
+    protected static void handlePostRequest(BufferedReader in, OutputStream out, Account C) throws IOException {
         System.out.println("Handling post request");
         StringBuilder requestBody = new StringBuilder();
         int contentLength = 0;
@@ -106,10 +104,10 @@ public class WebServer {
                         C.withdraw(Integer.valueOf(val));
                         break;
                     case "toAccount":
-                        toAccount=val;
-                        break; 
+                        toAccount = val;
+                        break;
                     case "toValue":
-                         C.deposit(Integer.valueOf(val));
+                        C.deposit(Integer.valueOf(val));
                         break;
                 }
             }
@@ -117,7 +115,7 @@ public class WebServer {
 
         // Create the response
         String responseContent = "<html><body><h1>Thank you for using Concordia Transfers</h1>" +
-                "<h2>Received Form Inputs:</h2>"+
+                "<h2>Received Form Inputs:</h2>" +
                 "<p>Account: " + account + "</p>" +
                 "<p>Value: " + value + "</p>" +
                 "<p>To Account: " + toAccount + "</p>" +
@@ -135,7 +133,7 @@ public class WebServer {
     }
 
     public static void main(String[] args) {
-        //Start the server, if an exception occurs, print the stack trace
+        // Start the server, if an exception occurs, print the stack trace
         WebServer server = new WebServer();
         try {
             server.start();
@@ -144,4 +142,3 @@ public class WebServer {
         }
     }
 }
-

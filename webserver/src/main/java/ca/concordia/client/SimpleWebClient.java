@@ -1,11 +1,17 @@
 package ca.concordia.client;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class SimpleWebClient implements Runnable {
 
-    public void run(){
+    public void run() {
         Socket socket = null;
         PrintWriter writer = null;
         BufferedReader reader = null;
@@ -23,8 +29,8 @@ public class SimpleWebClient implements Runnable {
 
             // Prepare the POST request with form data
             String postData = "account=123&value=1&toAccount=345&toValue=1";
-            //create a random number between 1000 and 60000
-            int waitfor = (int)(Math.random() * 1000 + 200);
+            // create a random number between 1000 and 60000
+            int waitfor = (int) (Math.random() * 1000 + 200);
             Thread.sleep(waitfor);
             // Send the POST request
             writer.println("POST /submit HTTP/1.1");
@@ -44,10 +50,10 @@ public class SimpleWebClient implements Runnable {
             while ((line = reader.readLine()) != null) {
                 System.out.println(line);
             }
-        } catch(InterruptedException | IOException e){
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
-        }finally {
-            
+        } finally {
+
             if (reader != null) {
                 try {
                     reader.close();
@@ -56,7 +62,7 @@ public class SimpleWebClient implements Runnable {
                 }
             }
             if (writer != null) {
-                writer.close(); 
+                writer.close();
             }
             if (socket != null) {
                 try {
@@ -70,8 +76,8 @@ public class SimpleWebClient implements Runnable {
     }
 
     public static void main(String[] args) {
-        //create 1000 clients
-        for(int i = 0; i < 1000; i++){
+        // create 1000 clients
+        for (int i = 0; i < 1000; i++) {
             Thread thread = new Thread(new SimpleWebClient());
             thread.start();
         }

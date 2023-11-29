@@ -5,16 +5,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
 
 public class MultiThread extends WebServer implements Runnable {
     private Socket clientSocket;
     private Account Account;
-    private  ReentrantLock mutex = new ReentrantLock();
+    private Semaphore mutex;
 
     public MultiThread(Socket socket, Account client) {
         this.clientSocket = socket;
-        this.Account=client;
+        this.Account = client;
+        mutex = new Semaphore(1);
     }
 
     @Override
@@ -29,22 +30,28 @@ public class MultiThread extends WebServer implements Runnable {
             String request = in.readLine();
             if (request != null) {
 
-                mutex.unlock();
+                mutex.acquire();
                 if (request.startsWith("GET")) {
                     handleGetRequest(out);
                 } else if (request.startsWith("POST")) {
                     handlePostRequest(in, out, Account);
                 }
-                mutex.lock();
+                mutex.release();
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
             // closing threads
             try {
-                if (in != null) in.close();
-                if (out != null) out.close();
-                if (clientSocket != null) clientSocket.close();
+                if (in != null)
+                    in.close();
+                if (out != null)
+                    out.close();
+                if (clientSocket != null)
+                    clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
