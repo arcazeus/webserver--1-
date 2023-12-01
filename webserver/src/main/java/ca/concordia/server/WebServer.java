@@ -1,19 +1,20 @@
 package ca.concordia.server;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 //create the WebServer class to receive connections on port 5000. Each connection is handled by a master thread that puts the descriptor in a bounded buffer. A pool of worker threads take jobs from this buffer if there are any to handle the connection.
 public class WebServer {
-    AtomicInteger B = new AtomicInteger(0);
-    Account client = new Account(B, null);
-
+    
     public void start() throws java.io.IOException {
+
         ServerSocket serverSocket = null;
         try {
             // Create a server socket
@@ -24,7 +25,7 @@ public class WebServer {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client...");
 
-                new Thread(new MultiThread(clientSocket, client)).start();
+                new Thread(new MultiThread(clientSocket, initialzeaccount())).start();
             }
         } finally {
             serverSocket.close();
@@ -32,39 +33,60 @@ public class WebServer {
 
     }
 
-    protected static void handleGetRequest(OutputStream out) throws IOException {
-        // Respond with a basic HTML page
+    protected static Account initialzeaccount() throws IOException {
+        String file = "webserver/src/main/resources/accounts.txt";
+
+
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+
+        String line = reader.readLine();
+
+        if (line == null) {
+            reader.close();
+            throw new NoSuchElementException("No more accounts");
+        }
+        String[] parts = line.split(",");
+        if (parts.length != 2) {
+            reader.close();
+            throw new IllegalArgumentException("line should have 2 values only");
+        }
+
+        int B = Integer.parseInt(parts[0].trim());
+        String id = parts[1].trim();
+
+        AtomicInteger Balance = new AtomicInteger(B);
+        reader.close();
+        return new Account(Balance, id);
+    }
+
+    protected static void handleGetRequest(OutputStream out, Account C) throws IOException {
+        // Respond with a basic HTML pageB
         System.out.println("Handling GET request");
         String response = "HTTP/1.1 200 OK\r\n\r\n" +
-                "<!DOCTYPE html>\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "<title>Concordia Transfers</title>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "\n" +
-                "<h1>Welcome to Concordia Transfers</h1>\n" +
-                "<p>Select the account and amount to transfer</p>\n" +
-                "\n" +
-                "<form action=\"/submit\" method=\"post\">\n" +
-                "        <label for=\"account\">Account:</label>\n" +
-                "        <input type=\"text\" id=\"account\" name=\"account\"><br><br>\n" +
-                "\n" +
-                "        <label for=\"value\">Value:</label>\n" +
-                "        <input type=\"text\" id=\"value\" name=\"value\"><br><br>\n" +
-                "\n" +
-                "        <label for=\"toAccount\">To Account:</label>\n" +
-                "        <input type=\"text\" id=\"toAccount\" name=\"toAccount\"><br><br>\n" +
-                "\n" +
-                "        <label for=\"toValue\">To Value:</label>\n" +
-                "        <input type=\"text\" id=\"toValue\" name=\"toValue\"><br><br>\n" +
-                "\n" +
-                "        <input type=\"submit\" value=\"Submit\">\n" +
-                "    </form>\n" +
-                "</body>\n" +
-                "</html>\n";
-        out.write(response.getBytes());
-        out.flush();
+        "<!DOCTYPE html>\n" +
+        "<html>\n" +
+        "<head>\n" +
+        "<title>Concordia Transfers</title>\n" +
+        "</head>\n" +
+        "<body>\n" +
+        "<h1>Welcome to Concordia Transfers</h1>\n" +
+        "<p>Select the account and amount to transfer</p>\n" +
+        "<form action=\"/submit\" method=\"post\">\n" +
+        "        <label for=\"account\">Account:</label>\n" +
+        "        <input type=\"text\" id=\"account\" name=\"account\" value=\"" + C.getID() + "\"><br><br>\n" +
+        "        <label for=\"value\">Value:</label>\n" +
+        "        <input type=\"text\" id=\"value\" name=\"value\" value=\"" + C.getBalance() + "\"><br><br>\n" +
+        "        <label for=\"toAccount\">To Account:</label>\n" +
+        "        <input type=\"text\" id=\"toAccount\" name=\"toAccount\"><br><br>\n" +
+        "        <label for=\"toValue\">To Value:</label>\n" +
+        "        <input type=\"text\" id=\"toValue\" name=\"toValue\"><br><br>\n" +
+        "        <input type=\"submit\" value=\"Submit\">\n" +
+        "    </form>\n" +
+        "</body>\n" +
+        "</html>\n";
+
+out.write(response.getBytes());
+out.flush();
     }
 
     protected static void handlePostRequest(BufferedReader in, OutputStream out, Account C) throws IOException {
@@ -88,7 +110,7 @@ public class WebServer {
         System.out.println(requestBody.toString());
         // Parse the request body as URL-encoded parameters
         String[] params = requestBody.toString().split("&");
-        String account = null, value = null, toAccount = null, toValue = null;
+        String toAccount = null, toValue = null;
 
         for (String param : params) {
             String[] parts = param.split("=");
@@ -98,7 +120,7 @@ public class WebServer {
 
                 switch (key) {
                     case "account":
-                        C.setID(val);
+                       C.setID(val);
                         break;
                     case "value":
                         C.withdraw(Integer.valueOf(val));
@@ -108,16 +130,17 @@ public class WebServer {
                         break;
                     case "toValue":
                         C.deposit(Integer.valueOf(val));
+                        toValue=val;
                         break;
                 }
             }
         }
-
+            
         // Create the response
         String responseContent = "<html><body><h1>Thank you for using Concordia Transfers</h1>" +
                 "<h2>Received Form Inputs:</h2>" +
-                "<p>Account: " + account + "</p>" +
-                "<p>Value: " + value + "</p>" +
+                "<p>Account: " + C.getID() + "</p>" +
+                "<p>Value: " + C.getBalance() + "</p>" +
                 "<p>To Account: " + toAccount + "</p>" +
                 "<p>To Value: " + toValue + "</p>" +
                 "</body></html>";
@@ -127,6 +150,12 @@ public class WebServer {
                 "Content-Length: " + responseContent.length() + "\r\n" +
                 "Content-Type: text/html\r\n\r\n" +
                 responseContent;
+
+                System.out.println("Transfer Details:");
+    System.out.println("From Account: " + C.getID());
+    System.out.println("From Value: " + C.getBalance());
+    System.out.println("To Account: " + toAccount);
+    System.out.println("To Value: " + toValue);
 
         out.write(response.getBytes());
         out.flush();

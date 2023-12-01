@@ -17,12 +17,14 @@ public class Account {
         return balance;
     }
 
-    public void withdraw(int amount){
+    public int withdraw(int amount){
         balance.addAndGet(-amount);
+        return amount;
     }
 
-    public void deposit(int amount){
+    public int deposit(int amount){
         balance.addAndGet(amount);
+        return amount;
     }
 
     public String getID(){

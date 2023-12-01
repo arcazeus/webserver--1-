@@ -32,7 +32,7 @@ public class MultiThread extends WebServer implements Runnable {
 
                 mutex.acquire();
                 if (request.startsWith("GET")) {
-                    handleGetRequest(out);
+                    handleGetRequest(out, Account);
                 } else if (request.startsWith("POST")) {
                     handlePostRequest(in, out, Account);
                 }
@@ -41,7 +41,7 @@ public class MultiThread extends WebServer implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+
             e.printStackTrace();
         } finally {
             // closing threads
